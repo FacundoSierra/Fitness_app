@@ -1,0 +1,32 @@
+
+        body {
+            /* Fondo degradado oscuro con tono gris */
+            background: linear-gradient(135deg, #52525e, #000000);
+            min-height: 100vh;
+            padding-top: 30px;
+            color: white;
+        }
+    
+        .card {
+            border: none;
+            border-radius: 20px;
+            transition: transform 0.2s ease;
+            background: linear-gradient(135deg, #cdcde0, #1a1818); /* Fondo claro para destacar sobre el fondo oscuro */
+            color: white;
+        }
+    
+        .card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+    
+        .card-img-top {
+            border-radius: 20px 20px 0 0;
+            height: 180px;
+            object-fit: cover;
+        }
+    
+        .btn-outline-danger {
+            border-radius: 20px;
+        }
+      
