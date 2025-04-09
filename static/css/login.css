@@ -1,117 +1,70 @@
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #52525e, #000000);
-    min-height: 100vh;
+    color: white;
     margin: 0;
     padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
+    font-family: Arial, sans-serif;
+    height: 100vh;
 }
 
-.container {
-    display: flex;
-    flex-wrap: wrap;
-    width: 90%;
-    max-width: 1000px;
-    border-radius: 20px;
-    overflow: hidden;
+.login-container {
+    height: 100vh;
+}
+
+.login-box {
     background: linear-gradient(135deg, #cdcde0, #1a1818);
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
-    transition: transform 0.2s ease;
-}
-
-.container:hover {
-    transform: scale(1.02);
-}
-
-.left {
-    flex: 1;
-    background-color: #1a1818;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-}
-
-.left img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 20px;
-    object-fit: cover;
-}
-
-.right {
-    flex: 1;
     padding: 40px 30px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    border-radius: 20px;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+    width: 100%;
+    max-width: 400px;
 }
 
 h2 {
-    text-align: center;
-    color: #ffffff;
-    margin-bottom: 25px;
-    font-size: 2rem;
-}
-
-.form-group {
-    margin-bottom: 20px;
+    color: white;
+    margin-bottom: 30px;
+    font-weight: bold;
 }
 
 label {
     display: block;
-    font-weight: 600;
+    font-weight: bold;
     margin-bottom: 5px;
 }
 
-input[type="text"],
-input[type="password"] {
+input[type="text"], input[type="password"] {
     width: 100%;
     padding: 10px;
     font-size: 1rem;
-    border: 1px solid #aaa;
+    border: none;
     border-radius: 10px;
     background-color: #333;
     color: white;
 }
 
-input[type="text"]::placeholder,
-input[type="password"]::placeholder {
-    color: #bbb;
-}
-
 .login-button {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     font-size: 1.1rem;
     background-color: transparent;
-    border: 2px solid #ffffff;
-    color: #ffffff;
-    border-radius: 20px;
+    color: white;
+    border: 2px solid white;
+    border-radius: 15px;
+    margin-top: 15px;
     cursor: pointer;
-    transition: all 0.3s;
     font-weight: bold;
+    transition: 0.3s;
 }
 
 .login-button:hover {
-    background-color: #333;
-    color: white;
-    box-shadow: 0 0 10px  #28a745;
-}
-
-.redirect {
-    text-align: center;
-    margin-top: 15px;
-    font-size: 0.9rem;
+    background-color: white;
+    color: #1a1818;
 }
 
 .redirect a {
-    color: #ffffff;
-    text-decoration: none;
+    color: white;
     font-weight: bold;
+    text-decoration: none;
 }
 
 .redirect a:hover {
