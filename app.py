@@ -104,28 +104,23 @@ def my_info():
         return render_template('my_info.html', user=user)
     return redirect(url_for('dashboard'))
 
-
 @app.route('/update_info', methods=['POST'])
 def update_info():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    
-    # Obtener el usuario de la base de datos
-    user = Usuario.query.get(session['user_id'])
-    
-    if user:
-        # Actualizar la información del usuario
-        Usuario.nombre = request.form['nombre']
-        Usuario.apellidos = request.form['apellidos']
-        Usuario.telefono = request.form['telefono']
-        Usuario.email = request.form['email']
-        Usuario.username = request.form['username']
-        
-        # Guardar los cambios en la base de datos
-        db.session.commit()
 
+    user = Usuario.query.get(session['user_id'])
+    if user:
+        user.nombre = request.form['nombre']
+        user.apellidos = request.form['apellidos']
+        user.telefono = request.form['telefono']
+        user.email = request.form['email']
+        user.username = request.form['username']
+
+        db.session.commit()
         return redirect(url_for('my_info'))
-    return redirect(url_for('dashboard'))
+    else:
+        return redirect(url_for('login'))
 
 
 @app.route('/exercises')
