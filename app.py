@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask import send_from_directory
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
@@ -24,6 +25,15 @@ class Training(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)  # <--- Corregido
     date = db.Column(db.String(50), nullable=False)
     exercises = db.Column(db.Text, nullable=False)  # JSON con ejercicios
+
+
+@app.route('/sitemap.xml')
+def sitemap():
+    return send_from_directory(app.static_folder, 'sitemap.xml')
+
+@app.route('/robots.txt')
+def robots():
+    return send_from_directory(app.static_folder, 'robots.txt')
 
 
 # Rutas

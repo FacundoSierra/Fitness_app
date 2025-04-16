@@ -17,7 +17,7 @@
             <div class="col-md-6">
                 <a href="/trainings" class="text-decoration-none text-dark">
                     <div class="card shadow-sm">
-                        <img src="../imagenes/Foto_entrenamientos.png" class="card-img-top" alt="Entrenamientos">
+                        <img src="{{ url_for('static', filename='imagenes/Foto_entrenamientos.png') }}" class="card-img-top" alt="Entrenamientos">
                         <div class="card-body text-center">
                             <h5 class="card-title">Mis Entrenamientos</h5>
                             <p class="card-text">Ver y seguir tus rutinas personalizadas.</p>
@@ -25,12 +25,14 @@
                     </div>
                 </a>
             </div>
-
+            
             <!-- Mi Información -->
             <div class="col-md-6">
                 <a href="/my_info" class="text-decoration-none text-dark">
-                    <div class="card shadow-sm">
-                        <img src="../imagenes/image.png" class="card-img-top" alt="Mi Información">
+                        <div class="card shadow-sm">
+                            <div class="fake-img-top d-flex align-items-center justify-content-center">
+                                <div class="user-icon"></div>
+                            </div>                 
                         <div class="card-body text-center">
                             <h5 class="card-title">Mi Información</h5>
                             <p class="card-text">Consulta y actualiza tus datos personales.</p>
@@ -43,7 +45,7 @@
             <div class="col-md-6">
                 <a href="/exercises" class="text-decoration-none text-dark">
                     <div class="card shadow-sm">
-                        <img src="../imagenes/Ejercicios.png" class="card-img-top" alt="Ejercicios">
+                        <img src="{{ url_for('static', filename='imagenes/Ejercicios.png') }}" class="card-img-top" alt="Ejercicios">
                         <div class="card-body text-center">
                             <h5 class="card-title">Ejercicios</h5>
                             <p class="card-text">Información sobre los ejercicios que realizas.</p>

@@ -30,3 +30,42 @@
             border-radius: 20px;
         }
       
+       /* Parte superior simulando una imagen */
+.fake-img-top {
+    height: 180px;
+    border-radius: 20px 20px 0 0;
+    background: linear-gradient(135deg, #cdcde0, #1a1818);
+}
+
+/* Muñequito perfil */
+.user-icon {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background-color: #000;
+    position: relative;
+}
+
+.user-icon::before {
+    content: '';
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 55px;
+    height: 55px;
+    background-color: #fff;
+    border-radius: 50%;
+}
+
+.user-icon::after {
+    content: '';
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    height: 55px;
+    background-color: #fff;
+    border-radius: 50%;
+}
