@@ -16,16 +16,16 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 CSV_FILE_ID = '1bTIrM42mmBL3L9i35b_y0eLnJEN9E0TU'  # ID real de tu archivo
 
 # ------------------ Google Drive ------------------
-# def get_drive_service():
-#     SERVICE_ACCOUNT_FILE = 'credenciales.json'
-#     creds = service_account.Credentials.from_service_account_file(
-#         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-#     return build('drive', 'v3', credentials=creds)
 def get_drive_service():
-    SERVICE_ACCOUNT_FILE = '/etc/secrets/credenciales.json'
+    SERVICE_ACCOUNT_FILE = 'credenciales.json'
     creds = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
     return build('drive', 'v3', credentials=creds)
+# def get_drive_service():
+#     SERVICE_ACCOUNT_FILE = '/etc/secrets/credenciales.json'
+#     creds = service_account.Credentials.from_service_account_file(
+#         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+#     return build('drive', 'v3', credentials=creds)
 
 def leer_usuarios_csv(file_id):
     service = get_drive_service()
@@ -93,9 +93,16 @@ def login():
             session['user_id'] = int(user.iloc[0]['id'])
             session['role'] = user.iloc[0]['rol']
             session['username'] = user.iloc[0]['nombre']
-            return redirect(url_for('dashboard'))
+
+            # Redirige según el rol
+            if user.iloc[0]['rol'] == 'admin':
+                return redirect(url_for('admin_dashboard'))
+            else:
+                return redirect(url_for('dashboard'))
+
         return render_template('login.html', error='Datos incorrectos')
     return render_template('login.html')
+
 
 @app.route('/dashboard')
 def dashboard():
@@ -106,6 +113,18 @@ def dashboard():
     if not user.empty:
         return render_template('user_dashboard.html', username=user.iloc[0]['nombre'])
     return redirect(url_for('login'))
+
+@app.route('/admin_dashboard')
+def admin_dashboard():
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return redirect(url_for('dashboard'))
+
+    df = leer_usuarios_csv(CSV_FILE_ID)
+    return render_template('admin_dashboard.html', usuarios=df.to_dict(orient='records'))
+
+
+
+
 
 @app.route('/trainings')
 def trainings():
