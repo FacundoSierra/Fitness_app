@@ -17,7 +17,7 @@ CSV_FILE_ID = '1bTIrM42mmBL3L9i35b_y0eLnJEN9E0TU'  # ID real de tu archivo
 
 # ------------------ Google Drive ------------------
 def get_drive_service():
-    SERVICE_ACCOUNT_INFO = json.loads(os.getenv("GOOGLE_CREDS"))
+    SERVICE_ACCOUNT_INFO = json.loads(os.getenv("GOOGLE_CRED"))
     creds = service_account.Credentials.from_service_account_info(
         SERVICE_ACCOUNT_INFO, scopes=SCOPES)
     return build('drive', 'v3', credentials=creds)
