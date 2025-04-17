@@ -1,0 +1,2 @@
+id,username,email,password,nombre,apellidos,telefono,rol
+1,Facun15,Facundosierramorales@gmail.com,scrypt:32768:8:1$oGkATbnEBc8o525t$c53ae78753f43139b5163cb1d79228bfbbe617b5ef0a05e398be39a93cd673802a601f5296a3b7c9ab5edae1efe569eb33500668dc10c0d3487eb49dd0e73d26,Facundo,Sierra Morales,667092231,user

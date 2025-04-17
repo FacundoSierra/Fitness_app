@@ -1,31 +1,45 @@
-from flask import Flask, render_template, request, redirect, url_for, session
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import send_from_directory
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+import pandas as pd
+import io
+import os
+import json
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/fitness'
-db = SQLAlchemy(app)
 
-# Modelos
-class Usuario(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(255), unique=True, nullable=False)
-    email = db.Column(db.String(255), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
-    nombre = db.Column(db.String(255), nullable=False)
-    apellidos = db.Column(db.String(255), nullable=False)
-    telefono = db.Column(db.String(20), nullable=False)
-    rol = db.Column(db.String(50), nullable=False)
+# Configuración de Google Drive
+SCOPES = ['https://www.googleapis.com/auth/drive']
+CSV_FILE_ID = '1bTIrM42mmBL3L9i35b_y0eLnJEN9E0TU'  # ID real de tu archivo
 
+# ------------------ Google Drive ------------------
+def get_drive_service():
+    SERVICE_ACCOUNT_INFO = json.loads(os.getenv("GOOGLE_CREDS"))
+    creds = service_account.Credentials.from_service_account_info(
+        SERVICE_ACCOUNT_INFO, scopes=SCOPES)
+    return build('drive', 'v3', credentials=creds)
 
-class Training(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)  # <--- Corregido
-    date = db.Column(db.String(50), nullable=False)
-    exercises = db.Column(db.Text, nullable=False)  # JSON con ejercicios
+def leer_usuarios_csv(file_id):
+    service = get_drive_service()
+    request = service.files().get_media(fileId=file_id)
+    fh = io.BytesIO()
+    downloader = MediaIoBaseDownload(fh, request)
+    done = False
+    while not done:
+        status, done = downloader.next_chunk()
+    fh.seek(0)
+    return pd.read_csv(fh)
 
+def escribir_usuarios_csv(df, file_id):
+    service = get_drive_service()
+    df.to_csv("temp.csv", index=False)
+    media = MediaFileUpload("temp.csv", mimetype='text/csv', resumable=True)
+    service.files().update(fileId=file_id, media_body=media).execute()
+
+# ------------------ Rutas ------------------
 
 @app.route('/sitemap.xml')
 def sitemap():
@@ -35,83 +49,81 @@ def sitemap():
 def robots():
     return send_from_directory(app.static_folder, 'robots.txt')
 
-
-# Rutas
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        identifier = request.form['username']  # Puede ser username o email
-        password = request.form['password']
-        user = Usuario.query.filter(
-            (Usuario.username == identifier) | (Usuario.email == identifier)
-        ).first()
-        if user and check_password_hash(user.password, password):
-            session['user_id'] = user.id
-            session['role'] = user.rol
-            return redirect(url_for('dashboard'))
-        return render_template('login.html', error='Datos incorrectos')
-    return render_template('login.html')
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = generate_password_hash(request.form['password'])
-        nombre = request.form['nombre']
-        apellidos = request.form['apellidos']
-        telefono = request.form['telefono']
-        rol = request.form['role']
+        df = leer_usuarios_csv(CSV_FILE_ID)
+        new_id = df['id'].max() + 1 if not df.empty else 1
 
-        new_user = Usuario(
-            username=username,
-            email=email,
-            password=password,
-            nombre=nombre,
-            apellidos=apellidos,
-            telefono=telefono,
-            rol=rol
-        )
+        nuevo_usuario = {
+            'id': new_id,
+            'username': request.form['username'],
+            'email': request.form['email'],
+            'password': generate_password_hash(request.form['password']),
+            'nombre': request.form['nombre'],
+            'apellidos': request.form['apellidos'],
+            'telefono': request.form['telefono'],
+            'rol': request.form['role']
+        }
 
-        db.session.add(new_user)
-        db.session.commit()
+        df = pd.concat([df, pd.DataFrame([nuevo_usuario])], ignore_index=True)
+        escribir_usuarios_csv(df, CSV_FILE_ID)
         return redirect(url_for('login'))
     return render_template('register.html')
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        identifier = request.form['username']
+        password = request.form['password']
+        df = leer_usuarios_csv(CSV_FILE_ID)
+
+        user = df[(df['username'] == identifier) | (df['email'] == identifier)]
+
+        if not user.empty and check_password_hash(user.iloc[0]['password'], password):
+            session['user_id'] = int(user.iloc[0]['id'])
+            session['role'] = user.iloc[0]['rol']
+            session['username'] = user.iloc[0]['nombre']
+            return redirect(url_for('dashboard'))
+        return render_template('login.html', error='Datos incorrectos')
+    return render_template('login.html')
 
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    
-    # Obtener el usuario de la base de datos
-    user = Usuario.query.get(session['user_id'])
-    
-    if user:
-        return render_template('user_dashboard.html', username=user.nombre)  # Pasar el nombre del usuario
+    df = leer_usuarios_csv(CSV_FILE_ID)
+    user = df[df['id'] == session['user_id']]
+    if not user.empty:
+        return render_template('user_dashboard.html', username=user.iloc[0]['nombre'])
     return redirect(url_for('login'))
 
-# Rutas
 @app.route('/trainings')
 def trainings():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('trainings.html')  # Crearemos este archivo luego
+    return render_template('en_construccion.html')
 
-@app.route('/my_info', methods=['GET'])
+
+@app.route('/exercises')
+def exercises():
+    return render_template('en_construccion.html')
+
+
+@app.route('/sobre_mi')
+def sobre_mi():
+    return render_template('en_construccion.html')
+
+@app.route('/my_info')
 def my_info():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    
-    # Obtener el usuario de la base de datos
-    user = Usuario.query.get(session['user_id'])
-    
-    if user:
-        return render_template('my_info.html', user=user)
+    df = leer_usuarios_csv(CSV_FILE_ID)
+    user = df[df['id'] == session['user_id']]
+    if not user.empty:
+        return render_template('my_info.html', user=user.iloc[0])
     return redirect(url_for('dashboard'))
 
 @app.route('/update_info', methods=['POST'])
@@ -119,40 +131,28 @@ def update_info():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    user = Usuario.query.get(session['user_id'])
-    if user:
-        user.nombre = request.form['nombre']
-        user.apellidos = request.form['apellidos']
-        user.telefono = request.form['telefono']
-        user.email = request.form['email']
-        user.username = request.form['username']
+    df = leer_usuarios_csv(CSV_FILE_ID)
+    idx = df.index[df['id'] == session['user_id']].tolist()
 
-        db.session.commit()
+    if idx:
+        i = idx[0]
+        df.at[i, 'nombre'] = request.form['nombre']
+        df.at[i, 'apellidos'] = request.form['apellidos']
+        df.at[i, 'telefono'] = request.form['telefono']
+        df.at[i, 'email'] = request.form['email']
+        df.at[i, 'username'] = request.form['username']
+
+        escribir_usuarios_csv(df, CSV_FILE_ID)
         return redirect(url_for('my_info'))
     else:
         return redirect(url_for('login'))
-
-
-@app.route('/exercises')
-def exercises():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('exercises.html')  # Crearemos este archivo luego
-
-@app.route('/sobre_mi')
-def sobre_mi():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return render_template('sobre_mi.html')  # Crearemos este archivo luego
-
 
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
     session.pop('role', None)
+    session.pop('username', None)
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
