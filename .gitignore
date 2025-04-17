@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Logs y dumps
+*.log
+
+# Archivos temporales del sistema
+*.swp
+.DS_Store
+Thumbs.db
+
+# Archivos de entorno
+.env
+.venv/
+venv/
+ENV/
+
+# Archivos de configuración personales
+*.sublime-workspace
+*.vscode/
+
+# Bases de datos locales
+*.sqlite3
+
+# Claves privadas / credenciales
+credenciales.json
+
+# Archivos de despliegue temporales
+temp.csv
