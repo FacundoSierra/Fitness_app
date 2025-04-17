@@ -16,8 +16,13 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 CSV_FILE_ID = '1bTIrM42mmBL3L9i35b_y0eLnJEN9E0TU'  # ID real de tu archivo
 
 # ------------------ Google Drive ------------------
+# def get_drive_service():
+#     SERVICE_ACCOUNT_FILE = 'credenciales.json'
+#     creds = service_account.Credentials.from_service_account_file(
+#         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+#     return build('drive', 'v3', credentials=creds)
 def get_drive_service():
-    SERVICE_ACCOUNT_FILE = 'credenciales.json'
+    SERVICE_ACCOUNT_FILE = '/etc/secrets/credenciales.json'
     creds = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
     return build('drive', 'v3', credentials=creds)
