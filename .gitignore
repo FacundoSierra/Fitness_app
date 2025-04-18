@@ -27,6 +27,7 @@ ENV/
 
 # Claves privadas / credenciales
 credenciales.json
+clave.json
 
 # Archivos de despliegue temporales
 temp.csv

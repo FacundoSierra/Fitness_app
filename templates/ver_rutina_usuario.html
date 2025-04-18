@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Rutina de Usuario - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style_admin.css') }}">
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2 sidebar">
+            <h4 class="text-white text-center">Admin</h4>
+            <a href="{{ url_for('admin_dashboard') }}"
+                class="{% if active_page == 'panel' %}bg-secondary text-white{% else %}text-white{% endif %}">Panel</a>
+            
+            <a href="{{ url_for('admin_usuarios') }}"
+                class="{% if active_page == 'usuarios' %}bg-secondary text-white{% else %}text-white{% endif %}">Usuarios</a>
+            
+            <a href="{{ url_for('admin_entrenamientos') }}"
+                class="{% if active_page == 'entrenamientos' %}bg-secondary text-white{% else %}text-white{% endif %}">Entrenamientos</a>
+            
+            <a href="{{ url_for('admin_estadisticas') }}"
+                class="{% if active_page == 'estadisticas' %}bg-secondary text-white{% else %}text-white{% endif %}">Estadísticas</a>
+            
+            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+        </div>
+
+        <!-- Contenido principal -->
+        <div class="col-md-10 p-4">
+            <h2 class="text-white">Rutina de {{ usuario.nombre }} {{ usuario.apellidos }}</h2>
+            <p class="text-light">Asigna una rutina por cada día de la semana.</p>
+
+            <form method="POST" action="{{ url_for('ver_rutina_usuario', user_id=usuario.id) }}">
+                <table class="table table-light table-striped">
+                    <thead>
+                        <tr>
+                            <th>Día</th>
+                            <th>Seleccionar entrenamiento</th>
+                            <th>O escribir manualmente</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dia in dias %}
+                        <tr>
+                            <td>{{ dia.capitalize() }}</td>
+                            <td>
+                                <select name="select_{{ dia }}" class="form-select">
+                                    <option value="">-- Seleccionar --</option>
+                                    {% for entrenamiento in entrenamientos %}
+                                        <option value="{{ entrenamiento }}" {% if rutina.get(dia) == entrenamiento %}selected{% endif %}>{{ entrenamiento }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control" name="manual_{{ dia }}" placeholder="Escribir rutina..." value="{{ rutina.get(dia, '') if rutina.get(dia) not in entrenamientos else '' }}">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="submit" class="btn btn-success">Guardar Rutina</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

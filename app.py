@@ -12,37 +12,53 @@ app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
 # Configuración de Google Drive
+
 SCOPES = ['https://www.googleapis.com/auth/drive']
-CSV_FILE_ID = '1bTIrM42mmBL3L9i35b_y0eLnJEN9E0TU'  # ID real de tu archivo
+SERVICE_ACCOUNT_FILE = 'clave.json'
+CSV_FILE_ID = '1-0aIHyyoUmUg07YqZWjLcL0dqfcrBW9w'  # usuarios.csv
+EJERCICIOS_FILE_ID = '1L2SdCBEWaxSaqtl5vWK4HRbqhiv7J-yY'  # ejercicios.csv
+# ASIGNACIONES_FILE_ID = 'PENDIENTE_DE_REEMPLAZAR'  # asignaciones.csv (pendiente)
 
 # ------------------ Google Drive ------------------
 def get_drive_service():
-    SERVICE_ACCOUNT_FILE = 'credenciales.json'
     creds = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
     return build('drive', 'v3', credentials=creds)
-# def get_drive_service():
-#     SERVICE_ACCOUNT_FILE = '/etc/secrets/credenciales.json'
-#     creds = service_account.Credentials.from_service_account_file(
-#         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-#     return build('drive', 'v3', credentials=creds)
 
-def leer_usuarios_csv(file_id):
+def leer_csv(file_id):
     service = get_drive_service()
     request = service.files().get_media(fileId=file_id)
     fh = io.BytesIO()
     downloader = MediaIoBaseDownload(fh, request)
     done = False
     while not done:
-        status, done = downloader.next_chunk()
+        _, done = downloader.next_chunk()
     fh.seek(0)
     return pd.read_csv(fh)
 
-def escribir_usuarios_csv(df, file_id):
+def escribir_csv(df, file_id):
     service = get_drive_service()
-    df.to_csv("temp.csv", index=False)
-    media = MediaFileUpload("temp.csv", mimetype='text/csv', resumable=True)
+    temp_file = 'temp.csv'
+    df.to_csv(temp_file, index=False)
+    media = MediaFileUpload(temp_file, mimetype='text/csv', resumable=True)
     service.files().update(fileId=file_id, media_body=media).execute()
+
+# Funciones específicas
+
+def leer_usuarios_csv():
+    return leer_csv(CSV_FILE_ID)
+
+def escribir_usuarios_csv(df):
+    escribir_csv(df, CSV_FILE_ID)
+
+def leer_ejercicios_csv():
+    return leer_csv(EJERCICIOS_FILE_ID)
+
+# def leer_asignaciones_csv():
+#     return leer_csv(ASIGNACIONES_FILE_ID)
+
+# def escribir_asignaciones_csv(df):
+#     escribir_csv(df, ASIGNACIONES_FILE_ID)
 
 # ------------------ Rutas ------------------
 
@@ -63,7 +79,7 @@ def index():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        df = leer_usuarios_csv(CSV_FILE_ID)
+        df = leer_usuarios_csv()
         new_id = df['id'].max() + 1 if not df.empty else 1
 
         nuevo_usuario = {
@@ -78,7 +94,7 @@ def register():
         }
 
         df = pd.concat([df, pd.DataFrame([nuevo_usuario])], ignore_index=True)
-        escribir_usuarios_csv(df, CSV_FILE_ID)
+        escribir_usuarios_csv(df)
         return redirect(url_for('login'))
     return render_template('register.html')
 
@@ -87,7 +103,7 @@ def login():
     if request.method == 'POST':
         identifier = request.form['username']
         password = request.form['password']
-        df = leer_usuarios_csv(CSV_FILE_ID)
+        df = leer_usuarios_csv()
 
         user = df[(df['username'] == identifier) | (df['email'] == identifier)]
 
@@ -119,21 +135,20 @@ def admin_dashboard():
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect(url_for('dashboard'))
 
-    df = leer_usuarios_csv(CSV_FILE_ID)
+    df = leer_usuarios_csv()
 
-    # FILTRAR SOLO USUARIOS (excluye admin)
-    solo_usuarios = df[df['rol'] == 'usuario']
+    # Filtrar solo usuarios normales (no admins)
+    solo_usuarios = df[df['rol'] == 'user']
 
     total_usuarios = len(solo_usuarios)
-    total_admins = df[df['rol'] == 'admin'].shape[0]
     ultimos_usuarios = solo_usuarios.sort_values(by='id', ascending=False).head(5).to_dict(orient='records')
 
     return render_template('admin_dashboard.html',
                            username=session.get('username'),
                            total_usuarios=total_usuarios,
-                           total_admins=total_admins,
                            ultimos_usuarios=ultimos_usuarios,
                            active_page='panel')
+
 
 
 @app.route('/admin_usuarios')
@@ -141,15 +156,51 @@ def admin_usuarios():
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect(url_for('dashboard'))
 
-    df = leer_usuarios_csv(CSV_FILE_ID)
-    usuarios = df.to_dict(orient='records')
+    df = leer_usuarios_csv()
+    usuarios = df[df['rol'] != 'admin'].to_dict(orient='records')
     return render_template('admin_usuarios.html', usuarios=usuarios, active_page='usuarios')
+
 
 @app.route('/admin_entrenamientos')
 def admin_entrenamientos():
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect(url_for('dashboard'))
-    return render_template('en_construccion_admin.html', titulo="Entrenamientos", mensaje="Estamos trabajando para que puedas gestionar los entrenamientos.", active_page='entrenamientos')
+
+    df = leer_usuarios_csv()
+    usuarios = df[df['rol'] != 'admin'].to_dict(orient='records')
+
+    return render_template('asignar_entrenamientos.html', usuarios=usuarios, active_page='entrenamientos')
+
+@app.route('/admin/entrenamientos/<int:user_id>')
+def ver_rutina_usuario(user_id):
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return redirect(url_for('dashboard'))
+
+    df_usuarios = leer_usuarios_csv()
+    usuario = df_usuarios[df_usuarios['id'] == user_id].to_dict(orient='records')
+
+    if not usuario:
+        return "Usuario no encontrado", 404
+
+    usuario = usuario[0]
+
+    rutina = {}  # Más adelante: cargar desde asignaciones.csv
+    dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
+
+    # Simulamos algunos entrenamientos (más adelante, leer desde CSV real)
+    entrenamientos = [
+        "Sentadillas", "Cardio HIIT", "Peso muerto", "Press banca",
+        "Burpees", "Bicicleta", "Dominadas"
+    ]
+
+    return render_template('ver_rutina_usuario.html',
+                           usuario=usuario,
+                           rutina=rutina,
+                           dias=dias,
+                           entrenamientos=entrenamientos,
+                           active_page='entrenamientos')
+
+
 
 @app.route('/admin_estadisticas')
 def admin_estadisticas():
@@ -165,7 +216,7 @@ def admin_estadisticas():
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    df = leer_usuarios_csv(CSV_FILE_ID)
+    df = leer_usuarios_csv()
     user = df[df['id'] == session['user_id']]
     if not user.empty:
         return render_template('user_dashboard.html', username=user.iloc[0]['nombre'])
@@ -189,7 +240,7 @@ def sobre_mi():
 def my_info():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    df = leer_usuarios_csv(CSV_FILE_ID)
+    df = leer_usuarios_csv()
     user = df[df['id'] == session['user_id']]
     if not user.empty:
         return render_template('my_info.html', user=user.iloc[0])
@@ -200,7 +251,7 @@ def update_info():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    df = leer_usuarios_csv(CSV_FILE_ID)
+    df = leer_usuarios_csv()
     idx = df.index[df['id'] == session['user_id']].tolist()
 
     if idx:
@@ -211,7 +262,7 @@ def update_info():
         df.at[i, 'email'] = request.form['email']
         df.at[i, 'username'] = request.form['username']
 
-        escribir_usuarios_csv(df, CSV_FILE_ID)
+        escribir_usuarios_csv(df)
         return redirect(url_for('my_info'))
     else:
         return redirect(url_for('login'))
