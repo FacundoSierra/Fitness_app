@@ -58,6 +58,8 @@ def robots():
 def index():
     return render_template('index.html')
 
+#---------------------LOGIN/REGISTER---------------------------------------------
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -103,6 +105,61 @@ def login():
         return render_template('login.html', error='Datos incorrectos')
     return render_template('login.html')
 
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    session.pop('role', None)
+    session.pop('username', None)
+    return redirect(url_for('index'))
+
+#---------------------ADMIN---------------------------------------------
+
+@app.route('/admin_dashboard')
+def admin_dashboard():
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return redirect(url_for('dashboard'))
+
+    df = leer_usuarios_csv(CSV_FILE_ID)
+
+    # FILTRAR SOLO USUARIOS (excluye admin)
+    solo_usuarios = df[df['rol'] == 'usuario']
+
+    total_usuarios = len(solo_usuarios)
+    total_admins = df[df['rol'] == 'admin'].shape[0]
+    ultimos_usuarios = solo_usuarios.sort_values(by='id', ascending=False).head(5).to_dict(orient='records')
+
+    return render_template('admin_dashboard.html',
+                           username=session.get('username'),
+                           total_usuarios=total_usuarios,
+                           total_admins=total_admins,
+                           ultimos_usuarios=ultimos_usuarios,
+                           active_page='panel')
+
+
+@app.route('/admin_usuarios')
+def admin_usuarios():
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return redirect(url_for('dashboard'))
+
+    df = leer_usuarios_csv(CSV_FILE_ID)
+    usuarios = df.to_dict(orient='records')
+    return render_template('admin_usuarios.html', usuarios=usuarios, active_page='usuarios')
+
+@app.route('/admin_entrenamientos')
+def admin_entrenamientos():
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return redirect(url_for('dashboard'))
+    return render_template('en_construccion_admin.html', titulo="Entrenamientos", mensaje="Estamos trabajando para que puedas gestionar los entrenamientos.", active_page='entrenamientos')
+
+@app.route('/admin_estadisticas')
+def admin_estadisticas():
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return redirect(url_for('dashboard'))
+    return render_template('en_construccion_admin.html', titulo="Estadísticas", mensaje="Próximamente podrás ver estadísticas detalladas aquí.", active_page='estadisticas')
+
+
+
+#---------------------USUARIO---------------------------------------------
 
 @app.route('/dashboard')
 def dashboard():
@@ -113,18 +170,6 @@ def dashboard():
     if not user.empty:
         return render_template('user_dashboard.html', username=user.iloc[0]['nombre'])
     return redirect(url_for('login'))
-
-@app.route('/admin_dashboard')
-def admin_dashboard():
-    if 'user_id' not in session or session.get('role') != 'admin':
-        return redirect(url_for('dashboard'))
-
-    df = leer_usuarios_csv(CSV_FILE_ID)
-    return render_template('admin_dashboard.html', usuarios=df.to_dict(orient='records'))
-
-
-
-
 
 @app.route('/trainings')
 def trainings():
@@ -171,12 +216,7 @@ def update_info():
     else:
         return redirect(url_for('login'))
 
-@app.route('/logout')
-def logout():
-    session.pop('user_id', None)
-    session.pop('role', None)
-    session.pop('username', None)
-    return redirect(url_for('index'))
+#---------------------MAIN---------------------------------------------
 
 if __name__ == '__main__':
     app.run(debug=True)
