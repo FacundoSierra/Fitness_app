@@ -183,22 +183,25 @@ def ver_rutina_usuario(user_id):
         return "Usuario no encontrado", 404
 
     usuario = usuario[0]
-
-    rutina = {}  # Más adelante: cargar desde asignaciones.csv
     dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
 
-    # Simulamos algunos entrenamientos (más adelante, leer desde CSV real)
-    entrenamientos = [
-        "Sentadillas", "Cardio HIIT", "Peso muerto", "Press banca",
-        "Burpees", "Bicicleta", "Dominadas"
-    ]
+    # Leer y agrupar los ejercicios desde el CSV
+    df_ejercicios = leer_ejercicios_csv()
+    ejercicios = {}
+    for _, row in df_ejercicios.iterrows():
+        cat = row['categoria']
+        sub = row['subcategoria']
+        nombre = row['ejercicio']
+        ejercicios.setdefault(cat, {}).setdefault(sub, []).append(nombre)
+
+    ejercicios_json = json.dumps(ejercicios, ensure_ascii=False)
 
     return render_template('ver_rutina_usuario.html',
                            usuario=usuario,
-                           rutina=rutina,
                            dias=dias,
-                           entrenamientos=entrenamientos,
+                           ejercicios_json=ejercicios_json,
                            active_page='entrenamientos')
+
 
 
 

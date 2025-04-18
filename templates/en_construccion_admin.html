@@ -13,21 +13,13 @@
             <!-- Sidebar -->
             <div class="col-md-2 sidebar">
                 <h4 class="text-white text-center">Admin</h4>
-                <a href="{{ url_for('admin_dashboard') }}"
-                    class="{% if active_page == 'panel' %}bg-secondary text-white{% else %}text-white{% endif %}">Panel</a>
-                
-                <a href="{{ url_for('admin_usuarios') }}"
-                    class="{% if active_page == 'usuarios' %}bg-secondary text-white{% else %}text-white{% endif %}">Usuarios</a>
-                
-                <a href="{{ url_for('admin_entrenamientos') }}"
-                    class="{% if active_page == 'entrenamientos' %}bg-secondary text-white{% else %}text-white{% endif %}">Entrenamientos</a>
-                
-                <a href="{{ url_for('admin_estadisticas') }}"
-                    class="{% if active_page == 'estadisticas' %}bg-secondary text-white{% else %}text-white{% endif %}">Estadísticas</a>
-                
+                <a href="{{ url_for('admin_dashboard') }}" class="{% if active_page == 'panel' %}bg-secondary text-white{% else %}text-white{% endif %}">Panel</a>
+                <a href="{{ url_for('admin_usuarios') }}" class="{% if active_page == 'usuarios' %}bg-secondary text-white{% else %}text-white{% endif %}">Usuarios</a>
+                <a href="{{ url_for('admin_entrenamientos') }}" class="{% if active_page == 'entrenamientos' %}bg-secondary text-white{% else %}text-white{% endif %}">Entrenamientos</a>
+                <a href="{{ url_for('admin_estadisticas') }}" class="{% if active_page == 'estadisticas' %}bg-secondary text-white{% else %}text-white{% endif %}">Estadísticas</a>
                 <a href="{{ url_for('logout') }}">Cerrar sesión</a>
-             
             </div>
+    
     
             <!-- Panel principal -->
             <div class="col-md-10 main-panel d-flex flex-column align-items-center justify-content-center text-center">
